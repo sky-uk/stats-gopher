@@ -6,17 +6,27 @@ var receivers = make([]chan interface{}, 0)
 
 // Send data to any listening receivers
 // If the receivers buffered channel is full, the events are dropped
-func Send(data interface{}) {
+func Send(sid string, data interface{}) {
 	var array []interface{}
 	var isArray bool
 
 	if array, isArray = data.([]interface{}); !isArray {
 		array = []interface{}{data}
 	}
-	for _, receiver := range receivers {
-		for _, datum := range array {
+
+	for _, datum := range array {
+		m, ok := datum.(map[string]interface{})
+
+		if !ok {
+			log.Printf("mq: expected data to be a key-value map, but got: %v'n", datum)
+			continue
+		}
+
+		m["sid"] = sid
+
+		for _, receiver := range receivers {
 			select {
-			case receiver <- datum:
+			case receiver <- m:
 			default:
 				log.Println("Buffer full, dropping event")
 			}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/sjltaylor/stats-gopher/insights"
 	"github.com/sjltaylor/stats-gopher/mq"
+	"github.com/sjltaylor/stats-gopher/printer"
 	"github.com/sjltaylor/stats-gopher/web"
 	"github.com/yvasiyarov/gorelic"
 )
@@ -22,6 +23,10 @@ func main() {
 	newRelicMonitoring()
 
 	go insights.Listen(newRelicKey, newRelicEndpoint, mq.Channel())
+
+	if os.Getenv("STDOUT_LISTENER") == "1" {
+		go printer.Listen(mq.Channel())
+	}
 
 	fmt.Printf("Stats Gopher PORT=%s\n", port)
 	web.Start(fmt.Sprintf(":%s", port))

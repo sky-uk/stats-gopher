@@ -15,9 +15,6 @@ function StatsGopher (options) {
 
 StatsGopher.prototype = {
   send: function (datum) {
-    if ((typeof datum.eventType !== 'string') || datum.eventType.length === 0) {
-      throw new Error('the eventType must be a non-zero length string');
-    }
     datum.sendTime = new Date().valueOf()
     this.startTimeout()
     this.buffer.push(datum)
