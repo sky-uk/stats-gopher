@@ -8,6 +8,7 @@ import (
 	"github.com/sjltaylor/stats-gopher/insights"
 	"github.com/sjltaylor/stats-gopher/mq"
 	"github.com/sjltaylor/stats-gopher/web"
+	"github.com/yvasiyarov/gorelic"
 )
 
 func main() {
@@ -18,10 +19,25 @@ func main() {
 	newRelicKey := newRelicKey()
 	newRelicEndpoint := newRelicEndpoint()
 
+	newRelicMonitoring()
+
 	go insights.Listen(newRelicKey, newRelicEndpoint, mq.Channel())
 
 	fmt.Printf("Stats Gopher PORT=%s\n", port)
 	web.Start(fmt.Sprintf(":%s", port))
+}
+
+func newRelicMonitoring() {
+	key := os.Getenv("NEWRELIC_MONITORING_KEY")
+
+	if key == "" {
+		return
+	}
+
+	agent := gorelic.NewAgent()
+	agent.Verbose = true
+	agent.NewrelicLicense = key
+	agent.Run()
 }
 
 func port() string {
