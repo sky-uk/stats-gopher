@@ -11,11 +11,13 @@ function StatsGopher (options) {
 
   this.options = options
   this.buffer = []
+  this.sid = StatsGopher.sid();
 }
 
 StatsGopher.prototype = {
   send: function (datum) {
     datum.sendTime = new Date().valueOf()
+    datum.sid = this.sid
     this.startTimeout()
     this.buffer.push(datum)
   },
@@ -47,6 +49,13 @@ StatsGopher.prototype = {
 
 if ('window' in this) {
   exports = window
+}
+
+StatsGopher.sid = function () {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
 }
 
 exports.StatsGopher = StatsGopher

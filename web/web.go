@@ -1,14 +1,11 @@
 package web
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/sjltaylor/stats-gopher/mq"
 )
@@ -26,23 +23,6 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respond("hello, send me something", w, r)
-}
-
-func sid(w http.ResponseWriter, r *http.Request) string {
-	var cookie *http.Cookie
-	var err error
-
-	if cookie, err = r.Cookie("sg-sid"); err != nil {
-		hash := sha256.New()
-		hash.Write([]byte(r.RemoteAddr))
-		hash.Write([]byte(fmt.Sprintf("%d", time.Now().UnixNano())))
-		sum := hash.Sum(nil)
-		sid := base64.StdEncoding.EncodeToString(sum)
-		cookie = &http.Cookie{Name: "sg-sid", Value: sid}
-		http.SetCookie(w, cookie)
-	}
-
-	return cookie.Value
 }
 
 func gopher(w http.ResponseWriter, r *http.Request) {
@@ -75,7 +55,7 @@ func gopher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go mq.Send(sid(w, r), data)
+	go mq.Send(data)
 
 	respond("nom nom nom", w, r)
 }

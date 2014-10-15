@@ -1,12 +1,15 @@
 package mq
 
-import "log"
+import (
+	"fmt"
+	"log"
+)
 
 var receivers = make([]chan interface{}, 0)
 
 // Send data to any listening receivers
 // If the receivers buffered channel is full, the events are dropped
-func Send(sid string, data interface{}) {
+func Send(data interface{}) {
 	var array []interface{}
 	var isArray bool
 
@@ -18,17 +21,20 @@ func Send(sid string, data interface{}) {
 		m, ok := datum.(map[string]interface{})
 
 		if !ok {
-			log.Printf("mq: expected data to be a key-value map, but got: %v'n", datum)
+			log.Printf(fmt.Sprintf("mq: expected data to be a key-value map, but got: %v", datum))
 			continue
 		}
 
-		m["sid"] = sid
+		if sid, ok := m["sid"]; !ok || sid == "" {
+			log.Println(fmt.Sprintf("mq: event dropped because it has no session id: %v", datum))
+			continue
+		}
 
 		for _, receiver := range receivers {
 			select {
 			case receiver <- m:
 			default:
-				log.Println("Buffer full, dropping event")
+				log.Println("mq: buffer full, dropping event")
 			}
 		}
 	}

@@ -41,6 +41,19 @@ describe('StatsGopher', function() {
       var statsGopher = new StatsGopher(options)
       expect(statsGopher.buffer).to.have.length.of(0);
     });
+    it('assigns a sid', function () {
+      var options = {
+        jQuery: { ajax: function () {} },
+        endpoint: "meow"
+      }
+      var sid = "123456";
+      StatsGopher.sid = sinon.spy(function () {
+        return sid;
+      });
+      var statsGopher = new StatsGopher(options)
+      expect(statsGopher.sid).to.equal(sid);
+      expect(StatsGopher.sid.called).to.equal(true)
+    });
   });
   describe('instance methods', function() {
     var statsGopher, options;
@@ -64,6 +77,14 @@ describe('StatsGopher', function() {
         var t1 = new Date().valueOf();
         expect(datum.sendTime).to.be.at.least(t0)
         expect(datum.sendTime).to.be.at.most(t1)
+      });
+      it('stamps the datum with the sid', function() {
+        var datum = {
+          eventType: 'test-event'
+        };
+        statsGopher.sid = "SID-123"
+        statsGopher.send(datum);
+        expect(datum.sid).to.equal("SID-123");
       });
       it('calls starts the timeout', function () {
         statsGopher.startTimeout = sinon.spy()
@@ -142,7 +163,7 @@ describe('StatsGopher', function() {
         expect(statsGopher.options.endpoint.length).not.to.equal(0)
         expect(ajaxOptions.url).to.equal(statsGopher.options.endpoint)
         expect(ajaxOptions.type).to.equal('POST')
-        expect(ajaxOptions.dataType).to.equal('json')
+        expect(ajaxOptions.dataType).to.equal('text')
         expect(ajaxOptions.data).to.equal(JSON.stringify(buffer))
         expect(ajaxOptions.cache).to.equal(false)
       });
