@@ -1,0 +1,26 @@
+{
+  "name": "stats-gopher.js",
+  "version": "1.0.0",
+  "description": "Client library for a stats-gopher",
+  "main": "gopher.js",
+  "scripts": {
+    "test": "NODE_PATH=./src mocha",
+    "dist": "mkdir -p dist && cp src/stats_gopher.js dist/stats_gopher.js && uglifyjs dist/stats_gopher.js > dist/stats_gopher.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:sjltaylor/stats-gopher.git"
+  },
+  "author": "Sam Taylor",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sjltaylor/stats-gopher/issues"
+  },
+  "homepage": "https://github.com/sjltaylor/stats-gopher",
+  "devDependencies": {
+    "mocha": "latest",
+    "chai": "latest",
+    "sinon": "latest",
+    "uglify-js": "latest"
+  }
+}
