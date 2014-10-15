@@ -1,6 +1,7 @@
 package insights
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/sjltaylor/stats-gopher/retry"
@@ -41,7 +42,7 @@ func (sender *sender) send(chunk []interface{}) {
 func handleErrors(retry *retry.Retry) {
 	count := 0
 	for err := range retry.Errors {
-		log.Println(err)
+		log.Println(fmt.Sprintf("insights: error sending data: %s", err))
 		count++
 		if count == 15 {
 			retry.Stop()
