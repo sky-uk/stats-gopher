@@ -31,6 +31,9 @@ func Send(data interface{}) {
 		}
 
 		for _, receiver := range receivers {
+			// TODO should really pass a copy of the event into the receiver so that
+			// mutations aren't visible between receivers. For now, nothing is expected
+			// to mutate the data
 			select {
 			case receiver <- m:
 			default:
