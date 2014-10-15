@@ -39,7 +39,7 @@ func startPrinter() {
 }
 
 func newRelicMonitoring() {
-	key := os.Getenv("NEWRELIC_MONITORING_KEY")
+	key := os.Getenv("NEW_RELIC_LICENSE_KEY")
 
 	if key == "" {
 		return

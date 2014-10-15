@@ -103,7 +103,7 @@ describe('StatsGopher', function() {
         expect(statsGopher.buffer.indexOf(datum)).to.equal(0)
       });
     });
-    describe('startTimeout', function() {
+    describe('startTimeout()', function() {
       describe('when there is no current timeout', function() {
         it('sets a timeout', function () {
           expect(statsGopher.timeout).to.equal(undefined)
@@ -137,7 +137,7 @@ describe('StatsGopher', function() {
         expect(flushedBuffer[0]).to.equal(e)
       });
     });
-    describe('onTimeout', function() {
+    describe('onTimeout()', function() {
       var buffer = [{eventType:"test"}], ajaxOptions;
 
       beforeEach(function () {
