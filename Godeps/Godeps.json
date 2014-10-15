@@ -1,0 +1,10 @@
+{
+	"ImportPath": "github.com/sjltaylor/stats-gopher",
+	"GoVersion": "go1.3.3",
+	"Deps": [
+		{
+			"ImportPath": "github.com/cenkalti/backoff",
+			"Rev": "c201004c081d767e9749c64d1039749c1353da7b"
+		}
+	]
+}
