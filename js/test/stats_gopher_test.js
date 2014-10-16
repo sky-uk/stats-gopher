@@ -12,22 +12,66 @@ describe('StatsGopher', function() {
     }
   }
 
+  function SpyDeferred () {
+    var returnSelf = function () { return this }.bind(this)
+    this.reject = sinon.spy(returnSelf)
+    this.fail = sinon.spy(returnSelf)
+    this.resolve = sinon.spy(returnSelf)
+    this.done = sinon.spy(returnSelf)
+
+    var returnPromise = function () { return this._promise }.bind(this)
+    this._promise = {
+      fail: sinon.spy(returnPromise),
+      done: sinon.spy(returnPromise)
+    }
+    this.promise = sinon.spy(returnPromise)
+  }
+
+  var spyJQuery, postDeferred, postOptions;
+
+  beforeEach(function () {
+    StatsGopher.sid = function () {
+      return 'sid';
+    }
+    postDeferred = new SpyDeferred()
+    spyJQuery = {
+      ajax: sinon.spy(function (options) {
+        postOptions = options
+        return postDeferred
+      }),
+      Deferred: SpyDeferred
+    }
+  });
+
   describe('StatsGopher(options)', function() {
     it('throws if the options object does not have a jQuery.ajax function', function () {
       expect(catchError(function () {
-        new StatsGopher()
+        delete spyJQuery.ajax
+        new StatsGopher({
+          jQuery: spyJQuery,
+          endpoint: 'whatever'
+        })
       })).to.equal("Error: no 'jQuery.ajax' option specified")
     });
     it('throws if the options object does not have an endpoint', function () {
       expect(catchError(function () {
         new StatsGopher({
-          jQuery: { ajax: function () {} }
+          jQuery: spyJQuery
         })
       })).to.equal("Error: no 'endpoint' option specified")
     });
+    it('throws if the options object does not have a Deferred constructor', function () {
+      expect(catchError(function () {
+        delete spyJQuery.Deferred
+        new StatsGopher({
+          jQuery: spyJQuery,
+          endpoint: 'whatever'
+        })
+      })).to.equal("Error: no 'jQuery.Deferred' constructor option specified")
+    });
     it('assigns the options to the statsGopher instance', function () {
       var options = {
-        jQuery: { ajax: function () {} },
+        jQuery: spyJQuery,
         endpoint: "meow"
       }
       var statsGopher = new StatsGopher(options)
@@ -35,7 +79,7 @@ describe('StatsGopher', function() {
     });
     it('assigns an empty buffer', function () {
       var options = {
-        jQuery: { ajax: function () {} },
+        jQuery: spyJQuery,
         endpoint: "meow"
       }
       var statsGopher = new StatsGopher(options)
@@ -43,7 +87,7 @@ describe('StatsGopher', function() {
     });
     it('assigns a sid', function () {
       var options = {
-        jQuery: { ajax: function () {} },
+        jQuery: spyJQuery,
         endpoint: "meow"
       }
       var sid = "123456";
@@ -60,13 +104,12 @@ describe('StatsGopher', function() {
 
     beforeEach(function () {
       options = {
-        jQuery: {
-          ajax: sinon.spy()
-        },
+        jQuery: spyJQuery,
         endpoint: 'test-endpoint'
       }
       statsGopher = new StatsGopher(options)
     });
+
     describe('send(datum)', function() {
       it('stamps the datum with a sendTime of now', function() {
         var datum = {
@@ -86,12 +129,14 @@ describe('StatsGopher', function() {
         statsGopher.send(datum);
         expect(datum.sid).to.equal("SID-123");
       });
-      it('calls starts the timeout', function () {
-        statsGopher.startTimeout = sinon.spy()
+      it('starts the buffer', function () {
+        statsGopher.startBuffer = sinon.spy(function () {
+          statsGopher.deferred = new SpyDeferred()
+        });
         statsGopher.send({
           eventType: 'test-event'
         });
-        expect(statsGopher.startTimeout.called).to.equal(true)
+        expect(statsGopher.startBuffer.called).to.equal(true)
       });
       it('puts the datum in the buffer', function () {
         var datum = {
@@ -99,23 +144,44 @@ describe('StatsGopher', function() {
         };
 
         statsGopher.send(datum);
-        debugger
         expect(statsGopher.buffer.indexOf(datum)).to.equal(0)
       });
+      describe('the promise', function() {
+        it('returns a promise with done/fail', function () {
+          var datum = {
+            eventType: 'test-event'
+          };
+
+          var dfd = statsGopher.send(datum);
+
+          expect(typeof dfd.done).to.equal('function')
+          expect(typeof dfd.fail).to.equal('function')
+        });
+      });
     });
-    describe('startTimeout()', function() {
-      describe('when there is no current timeout', function() {
+    describe('startBuffer()', function() {
+      describe('when there is no current buffer', function() {
         it('sets a timeout', function () {
           expect(statsGopher.timeout).to.equal(undefined)
-          statsGopher.startTimeout()
+          statsGopher.startBuffer()
           expect(statsGopher.timeout).not.to.equal(undefined)
+        });
+        it('sets a deferred', function () {
+          expect(statsGopher.deferred).to.equal(undefined)
+          statsGopher.startBuffer()
+          expect(statsGopher.deferred).not.to.equal(undefined)
         });
       });
       describe('when there is a current timeout', function() {
         it('does not change it', function () {
           statsGopher.timeout = 34567
-          statsGopher.startTimeout()
+          statsGopher.startBuffer()
           expect(statsGopher.timeout).to.equal(34567)
+        });
+        it('does not change it', function () {
+          statsGopher.buffer = 34567
+          statsGopher.startBuffer()
+          expect(statsGopher.buffer).to.equal(34567)
         });
       });
     });
@@ -138,18 +204,18 @@ describe('StatsGopher', function() {
       });
     });
     describe('onTimeout()', function() {
-      var buffer = [{eventType:"test"}], ajaxOptions;
+      var buffer = [{eventType:"test"}];
+      var deferred
 
       beforeEach(function () {
         statsGopher.flush = sinon.spy(function () {
           return buffer
         })
-        statsGopher.options.jQuery.ajax = sinon.spy(function (options) {
-          ajaxOptions = options
-        })
+        deferred = new SpyDeferred()
+        statsGopher.deferred = deferred
       })
       it('deletes the timeout', function () {
-        statsGopher.startTimeout()
+        statsGopher.startBuffer()
         expect(statsGopher.timeout).not.to.equal(undefined)
         statsGopher.onTimeout()
         expect(statsGopher.timeout).to.equal(undefined)
@@ -161,11 +227,42 @@ describe('StatsGopher', function() {
       it('calls jQuery.ajax with the correct options', function () {
         statsGopher.onTimeout();
         expect(statsGopher.options.endpoint.length).not.to.equal(0)
-        expect(ajaxOptions.url).to.equal(statsGopher.options.endpoint)
-        expect(ajaxOptions.type).to.equal('POST')
-        expect(ajaxOptions.dataType).to.equal('text')
-        expect(ajaxOptions.data).to.equal(JSON.stringify(buffer))
-        expect(ajaxOptions.cache).to.equal(false)
+        expect(postOptions.url).to.equal(statsGopher.options.endpoint)
+        expect(postOptions.type).to.equal('POST')
+        expect(postOptions.dataType).to.equal('text')
+        expect(postOptions.data).to.equal(JSON.stringify(buffer))
+        expect(postOptions.cache).to.equal(false)
+      });
+      describe('when the call succeeds', function() {
+
+        it('resolves the deferred', function () {
+          postDeferred.done = sinon.spy(function (cb) {
+            cb()
+            return postDeferred
+          });
+          statsGopher.onTimeout();
+          expect(postDeferred.done.called).to.equal(true)
+          expect(deferred.resolve.called).to.equal(true)
+        });
+        it('deletes the deferred', function () {
+          statsGopher.onTimeout();
+          expect(statsGopher.deferred).to.equal(undefined)
+        });
+      });
+      describe('when the call fails', function() {
+        it('fails the deferred', function () {
+          postDeferred.fail = sinon.spy(function (cb) {
+            cb()
+            return postDeferred
+          });
+          statsGopher.onTimeout();
+          expect(postDeferred.fail.called).to.equal(true)
+          expect(deferred.reject.called).to.equal(true)
+        });
+        it('deletes the deferred', function () {
+          statsGopher.onTimeout();
+          expect(statsGopher.deferred).to.equal(undefined)
+        });
       });
     });
   });
