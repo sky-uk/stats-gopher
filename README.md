@@ -1,6 +1,9 @@
 Stats Gopher
 ============
 
+[![Circle CI](https://circleci.com/gh/sjltaylor/stats-gopher.png?style=badge)](https://circleci.com/gh/sjltaylor/stats-gopher)
+
+
 A web stats endpoint for relaying stats to NewRelic Insights view the browser.
 
 Environment variables:
