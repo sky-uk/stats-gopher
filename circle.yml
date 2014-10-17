@@ -1,0 +1,6 @@
+## Customize test commands
+test:
+  override:
+    - cd js && npm test
+    - cd retry && go test
+    - cd mq && go test
