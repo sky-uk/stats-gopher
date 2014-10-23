@@ -7,6 +7,15 @@
 			"Rev": "c201004c081d767e9749c64d1039749c1353da7b"
 		},
 		{
+			"ImportPath": "github.com/codegangsta/negroni",
+			"Comment": "v0.1-32-gc64702c",
+			"Rev": "c64702ca03d0f858ab7866638b69e85f0d4c6ee7"
+		},
+		{
+			"ImportPath": "github.com/jingweno/negroni-gorelic",
+			"Rev": "0547cdd62f4b911984d435279bd46b4d1a580823"
+		},
+		{
 			"ImportPath": "github.com/yvasiyarov/go-metrics",
 			"Rev": "57bccd1ccd43f94bb17fdd8bf3007059b802f85e"
 		},

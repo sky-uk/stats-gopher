@@ -7,13 +7,28 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/codegangsta/negroni"
+	"github.com/jingweno/negroni-gorelic"
 	"github.com/sjltaylor/stats-gopher/mq"
 )
 
-func Start(bind string) {
-	http.HandleFunc("/gopher/", gopher)
-	http.HandleFunc("/", hello)
-	log.Fatal(http.ListenAndServe(bind, nil))
+func Start(bind, key string) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/gopher/", gopher)
+	mux.HandleFunc("/", hello)
+
+	n := negroni.Classic()
+	n.UseHandler(mux)
+
+	n.Use(negroni.NewRecovery())
+	n.Use(negroni.NewLogger())
+
+	if key != "" {
+		n.Use(negronigorelic.New(key, "stats-gopher", true))
+	}
+
+	n.Run(bind)
 }
 
 func hello(w http.ResponseWriter, r *http.Request) {

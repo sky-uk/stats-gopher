@@ -21,11 +21,11 @@ func main() {
 }
 
 func startInsights() {
-	if ep := os.Getenv("NEWRELIC_INSIGHTS_ENDPOINT"); ep != "" {
-		key := os.Getenv("NEWRELIC_INSIGHTS_KEY")
+	if ep := os.Getenv("NEW_RELIC_INSIGHTS_ENDPOINT"); ep != "" {
+		key := os.Getenv("NEW_RELIC_INSIGHTS_KEY")
 
 		if len(key) == 0 {
-			panic("NEWRELIC_INSIGHTS_KEY not set")
+			panic("NEW_RELIC_INSIGHTS_KEY not set")
 		}
 
 		go insights.Listen(key, ep, mq.Channel())
@@ -59,5 +59,5 @@ func startWebServer() {
 	}
 
 	fmt.Printf("Stats Gopher PORT=%s\n", port)
-	web.Start(fmt.Sprintf(":%s", port))
+	web.Start(fmt.Sprintf(":%s", port), os.Getenv("NEW_RELIC_LICENSE_KEY"))
 }
