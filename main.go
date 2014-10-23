@@ -48,6 +48,8 @@ func newRelicMonitoring() {
 	agent := gorelic.NewAgent()
 	agent.Verbose = true
 	agent.NewrelicLicense = key
+	agent.NewrelicName = "stats-gopher"
+	agent.GCPollInterval = 60
 	agent.Run()
 }
 
