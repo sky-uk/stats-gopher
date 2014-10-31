@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -49,22 +50,30 @@ func (request *request) Try() error {
 		return fmt.Errorf("unexpected response (%d)\n", status)
 	}
 
+	var errorMessage string
+
+	if body, bodyErr := ioutil.ReadAll(response.Body); bodyErr == nil {
+		errorMessage = string(body)
+	} else {
+		errorMessage = "<no error message in response>"
+	}
+
 	if status < 300 { // 200-299
 		return nil
 	}
 
 	if status < 400 { // 300-399
-		return fmt.Errorf("unexpected redirect response (%d)\n", status)
+		return fmt.Errorf("unexpected redirect response (%d): %s\n", status, errorMessage)
 	}
 
 	if status < 500 { // 400-499
-		return fmt.Errorf("client error (%d)\n", status)
+		return fmt.Errorf("client error (%d): %s\n", status, errorMessage)
 	}
 
 	if status < 600 { // 500-599
-		return fmt.Errorf("server error (%d)\n", status)
+		return fmt.Errorf("server error (%d): %s\n", status, errorMessage)
 	}
 
 	// 600+
-	return fmt.Errorf("unexpected response (%d)\n", status)
+	return fmt.Errorf("unexpected response (%d): %s\n", status, errorMessage)
 }

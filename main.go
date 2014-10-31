@@ -29,6 +29,8 @@ func startInsights() {
 		}
 
 		go insights.Listen(key, ep, mq.Channel())
+	} else {
+		fmt.Println("Insights listener not started; NEW_RELIC_INSIGHTS_ENDPOINT is unset")
 	}
 }
 

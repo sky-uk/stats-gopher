@@ -35,7 +35,9 @@ func (sender *sender) send(chunk []interface{}) {
 
 	request := newRequest(sender.key, sender.endpoint, chunk)
 	retry := retry.NewRetry()
+
 	go handleErrors(retry)
+
 	retry.Execute(request)
 }
 

@@ -43,7 +43,11 @@ func TestRetryWithFailingTryer(t *testing.T) {
 	}()
 
 	tryer := &testTryer{}
-	retry.Execute(tryer)
+	ok := retry.Execute(tryer)
+
+	if ok {
+		t.Fatalf("expected the failed try to return false")
+	}
 
 	if tryer.tries != 1 {
 		t.Fatalf("expected tries to be 1 but was: %d", tryer.tries)
@@ -114,7 +118,11 @@ func TestRetryWithImmediatelySucceedingTryer(t *testing.T) {
 	}()
 
 	tryer := &succeedingTestTryer{}
-	retry.Execute(tryer)
+	ok := retry.Execute(tryer)
+
+	if !ok {
+		t.Fatalf("expected the successful try to return true")
+	}
 
 	if tryer.tries != 1 {
 		t.Fatalf("expected tries to be 1 but was: %d", tryer.tries)

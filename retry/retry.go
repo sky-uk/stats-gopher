@@ -42,13 +42,17 @@ func NewRetry() *Retry {
 // retrying a maximum of n attempts
 // errors are passed into the return error channel which is closed after success
 // or the final retry
-func (retry *Retry) Execute(tryer Tryer) {
-	if err := tryer.Try(); err == nil {
+func (retry *Retry) Execute(tryer Tryer) (ok bool) {
+	var err error
+
+	if err = tryer.Try(); err == nil {
 		retry.Stop()
-	} else {
-		retry.errors <- err
-		go retry.retry(tryer)
+		return true
 	}
+
+	retry.errors <- err
+	go retry.retry(tryer)
+	return false
 }
 
 // Stop retrying the Tryer
