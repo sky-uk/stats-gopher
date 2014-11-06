@@ -3,3 +3,4 @@ test:
   override:
     - cd retry && go test
     - cd mq && go test
+    - cd presence && go test
