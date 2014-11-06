@@ -6,32 +6,47 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/codegangsta/negroni"
 	"github.com/jingweno/negroni-gorelic"
 	"github.com/sjltaylor/stats-gopher/mq"
+	"github.com/sjltaylor/stats-gopher/presence"
 )
 
+var monitors = presence.NewMonitorPool(map[string]time.Duration{
+	"heartbeat":     time.Second * 30,
+	"user-activity": time.Minute * 45,
+})
+
+// Start the web server
+// the key is the api key for new relic monitoring
 func Start(bind, key string) {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/gopher/", gopher)
-	mux.HandleFunc("/", hello)
+	mux.HandleFunc("/gopher/", gopherEndpoint)
+	mux.HandleFunc("/presence/", presenceEndpoint)
+	mux.HandleFunc("/", helloEndpoint)
 
 	n := negroni.Classic()
 	n.UseHandler(mux)
 
 	n.Use(negroni.NewRecovery())
-	n.Use(negroni.NewLogger())
 
 	if key != "" {
 		n.Use(negronigorelic.New(key, "stats-gopher", true))
 	}
 
+	go func() {
+		for {
+			mq.Send(<-monitors.C)
+		}
+	}()
+
 	n.Run(bind)
 }
 
-func hello(w http.ResponseWriter, r *http.Request) {
+func helloEndpoint(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		w.WriteHeader(405)
 		return
@@ -40,7 +55,7 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	respond("hello, send me something", w, r)
 }
 
-func gopher(w http.ResponseWriter, r *http.Request) {
+func gopherEndpoint(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Access-Control-Allow-Methods", "POST, OPTIONS")
 
@@ -73,6 +88,39 @@ func gopher(w http.ResponseWriter, r *http.Request) {
 	go mq.Send(data)
 
 	respond("nom nom nom", w, r)
+}
+
+func presenceEndpoint(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Methods", "POST, OPTIONS")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(200)
+		return
+	}
+
+	if r.Method != "POST" {
+		w.WriteHeader(405)
+		return
+	}
+
+	var blob []byte
+	var err error
+	notification := new(presence.Notification)
+
+	if blob, err = ioutil.ReadAll(r.Body); err != nil {
+		log.Println(fmt.Sprintf("web: error reading heartbeat body: %s", err))
+		w.WriteHeader(500)
+		return
+	}
+
+	if err = json.Unmarshal(blob, &notification); err != nil {
+		log.Printf("web: error parsing heartbeat json (%s): %s\n", err, string(blob))
+		w.WriteHeader(500)
+		return
+	}
+
+	go monitors.Notify(notification)
 }
 
 func respond(message string, w http.ResponseWriter, r *http.Request) {
