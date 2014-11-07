@@ -39,7 +39,17 @@ func Start(bind, key string) {
 
 	go func() {
 		for {
-			mq.Send(<-monitors.C)
+			n := <-monitors.C
+			event := map[string]interface{}{
+				"sid":              n.Sid,
+				"code":             n.Code,
+				"start":            n.Start,
+				"lastNotification": n.LastNotification,
+				"end":              n.End,
+				"duration":         n.Duration,
+				"wait":             n.Wait,
+			}
+			mq.Send(event)
 		}
 	}()
 
@@ -106,7 +116,7 @@ func presenceEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	var blob []byte
 	var err error
-	notification := new(presence.Notification)
+	var notifications []presence.Notification
 
 	if blob, err = ioutil.ReadAll(r.Body); err != nil {
 		log.Println(fmt.Sprintf("web: error reading heartbeat body: %s", err))
@@ -114,13 +124,15 @@ func presenceEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = json.Unmarshal(blob, &notification); err != nil {
+	if err = json.Unmarshal(blob, &notifications); err != nil {
 		log.Printf("web: error parsing heartbeat json (%s): %s\n", err, string(blob))
 		w.WriteHeader(500)
 		return
 	}
 
-	go monitors.Notify(notification)
+	for _, notification := range notifications {
+		go monitors.Notify(&notification)
+	}
 }
 
 func respond(message string, w http.ResponseWriter, r *http.Request) {
