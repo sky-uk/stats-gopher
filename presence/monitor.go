@@ -58,9 +58,12 @@ func (m *monitor) run() {
 }
 
 func (m *monitor) timeoutNow() {
+	end := time.Now()
 	m.c <- &Timeout{
 		Start:            m.start,
 		LastNotification: m.lastNotification,
-		End:              time.Now(),
+		End:              end,
+		Duration:         end.Sub(m.start),
+		Wait:             m.timeout,
 	}
 }

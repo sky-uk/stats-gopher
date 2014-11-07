@@ -89,6 +89,14 @@ func TestMonitorTimeout(t *testing.T) {
 	if timeout.End.Unix() > tEndUnix {
 		t.Fatalf("the end time was set to the time after the monitor timed out")
 	}
+
+	if timeout.Duration != timeout.End.Sub(timeout.Start) {
+		t.Fatalf("the duration should be the difference between the start and end time")
+	}
+
+	if timeout.Wait != mc.monitor.timeout {
+		t.Fatalf("the wait time for the timeout should be set to the timeout for the monitor")
+	}
 }
 
 func TestMonitorCancel(t *testing.T) {
