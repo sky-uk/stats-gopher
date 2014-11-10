@@ -7,7 +7,7 @@ import (
 )
 
 func TestSessionTimeout(t *testing.T) {
-	session := newSession("sid1")
+	session := newSession("key1")
 
 	session.monitor("fishing", time.Minute)
 	session.monitor("rowing", time.Second)
@@ -28,8 +28,8 @@ func TestSessionTimeout(t *testing.T) {
 
 	select {
 	case timeout := <-session.c:
-		if timeout.Sid != "sid1" {
-			t.Fatalf("end event sid should be the session sid")
+		if timeout.Key != "key1" {
+			t.Fatalf("end event key should be the session key")
 		}
 		if timeout.Code != "rowing" {
 			t.Fatalf("end event code should be the monitor name")
@@ -52,7 +52,7 @@ func TestSessionTimeout(t *testing.T) {
 }
 
 func TestSessionPulse(t *testing.T) {
-	session := newSession("sid")
+	session := newSession("key")
 
 	session.monitor("fishing", time.Hour)
 	session.monitor("rowing", time.Minute)

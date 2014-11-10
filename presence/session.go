@@ -3,14 +3,14 @@ package presence
 import "time"
 
 type session struct {
-	sid      string
+	key      string
 	c        chan *Timeout
 	monitors map[string]*monitor
 }
 
-func newSession(sid string) *session {
+func newSession(key string) *session {
 	return &session{
-		sid:      sid,
+		key:      key,
 		c:        make(chan *Timeout, 1),
 		monitors: make(map[string]*monitor),
 	}
@@ -42,7 +42,7 @@ func (s *session) end(name string, timeout *Timeout) {
 		m.cancel()
 	}
 
-	timeout.Sid = s.sid
+	timeout.Key = s.key
 	timeout.Code = name
 
 	select {

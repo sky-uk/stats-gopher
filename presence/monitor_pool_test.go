@@ -13,9 +13,9 @@ func TestMonitorPoolEndEvents(t *testing.T) {
 	})
 
 	// test the session lookup
-	s := mp.session("sid1")
+	s := mp.session("key1")
 
-	if mp.session("sid1") == nil {
+	if mp.session("key1") == nil {
 		t.Fatalf("no session was returned")
 	}
 
@@ -27,7 +27,7 @@ func TestMonitorPoolEndEvents(t *testing.T) {
 		t.Fatalf("session monitor timeout for 'user' was not set")
 	}
 
-	if mp.session("sid1") != s {
+	if mp.session("key1") != s {
 		t.Fatalf("existing session was not returned")
 	}
 
@@ -60,7 +60,7 @@ func TestSessionRemovalOnTimeout(t *testing.T) {
 	})
 
 	// test the session lookup
-	s := mp.session("sid1")
+	s := mp.session("key1")
 
 	s.end("heartbeat", &Timeout{
 		Start:            time.Now(),
@@ -70,7 +70,7 @@ func TestSessionRemovalOnTimeout(t *testing.T) {
 
 	runtime.Gosched()
 
-	if _, ok := mp.sessions["sid1"]; ok {
+	if _, ok := mp.sessions["key1"]; ok {
 		t.Fatalf("session should have been removed when it ended")
 	}
 }

@@ -12,7 +12,7 @@ type MonitorPool struct {
 
 // Notification describes the details of a notification of presence
 type Notification struct {
-	Sid  string
+	Key  string
 	Code string
 }
 
@@ -32,15 +32,15 @@ func NewMonitorPool(timeouts map[string]time.Duration) *MonitorPool {
 
 // Notify the monitor pool of the presence of something
 func (mp *MonitorPool) Notify(n *Notification) {
-	mp.session(n.Sid).pulse(n.Code)
+	mp.session(n.Key).pulse(n.Code)
 }
 
-func (mp *MonitorPool) session(sid string) *session {
-	if session, ok := mp.sessions[sid]; ok {
+func (mp *MonitorPool) session(key string) *session {
+	if session, ok := mp.sessions[key]; ok {
 		return session
 	}
 
-	session := newSession(sid)
+	session := newSession(key)
 
 	for name, timeout := range mp.timeouts {
 		session.monitor(name, timeout)
@@ -50,11 +50,11 @@ func (mp *MonitorPool) session(sid string) *session {
 				return
 			}
 			mp.c <- *timeout
-			delete(mp.sessions, sid)
+			delete(mp.sessions, key)
 		}()
 	}
 
-	mp.sessions[sid] = session
+	mp.sessions[key] = session
 
 	return session
 }
