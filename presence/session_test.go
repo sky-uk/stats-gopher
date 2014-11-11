@@ -55,13 +55,11 @@ func TestSessionPulse(t *testing.T) {
 	session := newSession("key")
 
 	session.monitor("fishing", time.Hour)
-	session.monitor("rowing", time.Minute)
-
-	rowing := session.monitors["rowing"]
+	rowing := session.monitor("rowing", time.Minute)
 
 	t0 := time.Now()
 
-	session.pulse("rowing")
+	rowing.pulse()
 
 	t1 := time.Now()
 	tLastNotificationUnix := rowing.lastNotification.Unix()

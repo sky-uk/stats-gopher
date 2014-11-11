@@ -16,14 +16,14 @@ func newSession(key string) *session {
 	}
 }
 
-func (s *session) monitor(name string, timeout time.Duration) {
+func (s *session) monitor(name string, timeout time.Duration) *monitor {
+	if m, ok := s.monitors[name]; ok {
+		return m
+	}
 	m := newMonitor(timeout)
 	s.monitors[name] = m
 	go s.waitForTimeout(name, m)
-}
-
-func (s *session) pulse(name string) {
-	s.monitors[name].pulse()
+	return m
 }
 
 func (s *session) waitForTimeout(name string, m *monitor) {

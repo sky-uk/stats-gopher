@@ -1,6 +1,10 @@
 package presence
 
-import "time"
+import (
+	"fmt"
+	"log"
+	"time"
+)
 
 // MonitorPool handles presence notifications
 type MonitorPool struct {
@@ -32,7 +36,13 @@ func NewMonitorPool(timeouts map[string]time.Duration) *MonitorPool {
 
 // Notify the monitor pool of the presence of something
 func (mp *MonitorPool) Notify(n *Notification) {
-	mp.session(n.Key).pulse(n.Code)
+	if timeout, ok := mp.timeouts[n.Code]; ok {
+		session := mp.session(n.Key)
+		monitor := session.monitor(n.Code, timeout)
+		monitor.pulse()
+	} else {
+		log.Println(fmt.Sprintf("presence: no configuration for notification code: %s", n.Code))
+	}
 }
 
 func (mp *MonitorPool) session(key string) *session {
@@ -42,17 +52,14 @@ func (mp *MonitorPool) session(key string) *session {
 
 	session := newSession(key)
 
-	for name, timeout := range mp.timeouts {
-		session.monitor(name, timeout)
-		go func() {
-			timeout := <-session.c
-			if timeout == nil {
-				return
-			}
-			mp.c <- *timeout
-			delete(mp.sessions, key)
-		}()
-	}
+	go func() {
+		timeout := <-session.c
+		if timeout == nil {
+			return
+		}
+		mp.c <- *timeout
+		delete(mp.sessions, key)
+	}()
 
 	mp.sessions[key] = session
 

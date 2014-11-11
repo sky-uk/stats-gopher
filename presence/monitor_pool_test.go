@@ -19,11 +19,11 @@ func TestMonitorPoolEndEvents(t *testing.T) {
 		t.Fatalf("no session was returned")
 	}
 
-	if s.monitors["heartbeat"].timeout != time.Millisecond*3 {
+	if s.monitor("heartbeat", time.Millisecond*3).timeout != time.Millisecond*3 {
 		t.Fatalf("session monitor timeout for 'heartbeat' was not set")
 	}
 
-	if s.monitors["user-active"].timeout != time.Millisecond*2 {
+	if s.monitor("user-active", time.Millisecond*2).timeout != time.Millisecond*2 {
 		t.Fatalf("session monitor timeout for 'user' was not set")
 	}
 
