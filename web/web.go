@@ -15,7 +15,7 @@ import (
 )
 
 var monitors = presence.NewMonitorPool(map[string]time.Duration{
-	"heartbeat":     time.Second * 30,
+	"heartbeat":     time.Second * 45,
 	"user-activity": time.Minute * 45,
 })
 
@@ -41,7 +41,7 @@ func Start(bind, key string) {
 		for {
 			n := <-monitors.C
 			event := map[string]interface{}{
-				"sid":              n.Sid,
+				"key":              n.Key,
 				"code":             n.Code,
 				"start":            n.Start,
 				"lastNotification": n.LastNotification,
