@@ -1,9 +1,6 @@
 package mq
 
-import (
-	"fmt"
-	"log"
-)
+import "log"
 
 var receivers = make([]chan interface{}, 0)
 
@@ -18,24 +15,12 @@ func Send(data interface{}) {
 	}
 
 	for _, datum := range array {
-		m, ok := datum.(map[string]interface{})
-
-		if !ok {
-			log.Printf(fmt.Sprintf("mq: expected data to be a key-value map, but got: %v", datum))
-			continue
-		}
-
-		if sid, ok := m["sid"]; !ok || sid == "" {
-			log.Println(fmt.Sprintf("mq: event dropped because it has no session id: %v", datum))
-			continue
-		}
-
 		for _, receiver := range receivers {
 			// TODO should really pass a copy of the event into the receiver so that
 			// mutations aren't visible between receivers. For now, nothing is expected
 			// to mutate the data
 			select {
-			case receiver <- m:
+			case receiver <- datum:
 			default:
 				log.Println("mq: buffer full, dropping event")
 			}
