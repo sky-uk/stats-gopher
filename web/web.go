@@ -41,6 +41,7 @@ func Start(bind, key string) {
 		for {
 			n := <-monitors.C
 			event := map[string]interface{}{
+				"eventType":        "UserAction",
 				"key":              n.Key,
 				"code":             n.Code,
 				"start":            n.Start,
