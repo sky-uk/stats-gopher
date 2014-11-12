@@ -90,8 +90,8 @@ func TestMonitorTimeout(t *testing.T) {
 		t.Fatalf("the end time was set to the time after the monitor timed out")
 	}
 
-	if timeout.Duration != timeout.End.Sub(timeout.Start) {
-		t.Fatalf("the duration should be the difference between the start and end time")
+	if timeout.Duration != timeout.LastNotification.Sub(timeout.Start) {
+		t.Fatalf("the duration should be the difference between the start and last notification time")
 	}
 
 	if timeout.Wait != mc.monitor.timeout {

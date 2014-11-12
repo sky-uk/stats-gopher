@@ -63,7 +63,7 @@ func (m *monitor) timeoutNow() {
 		Start:            m.start,
 		LastNotification: m.lastNotification,
 		End:              end,
-		Duration:         end.Sub(m.start),
+		Duration:         m.lastNotification.Sub(m.start),
 		Wait:             m.timeout,
 	}
 }
