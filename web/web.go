@@ -47,8 +47,8 @@ func Start(bind, key string) {
 				"start":            n.Start,
 				"lastNotification": n.LastNotification,
 				"end":              n.End,
-				"duration":         n.Duration,
-				"wait":             n.Wait,
+				"duration":         int64(n.Duration) / 1e9,
+				"wait":             int64(n.Wait) / 1e9,
 			}
 			mq.Send(event)
 		}
