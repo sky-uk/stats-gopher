@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/codegangsta/negroni"
@@ -13,6 +14,26 @@ import (
 	"github.com/sjltaylor/stats-gopher/mq"
 	"github.com/sjltaylor/stats-gopher/presence"
 )
+
+type OneLineLogger struct {
+	*log.Logger
+}
+
+func newLogger() *OneLineLogger {
+	return &OneLineLogger{log.New(os.Stdout, "[stats-gopher]\t", 0)}
+}
+
+func (l *OneLineLogger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	start := time.Now()
+	next(rw, r)
+	res := rw.(negroni.ResponseWriter)
+	requestId := r.Header.Get("X-Request-ID")
+	l.Printf("%s\t%s\t%s\t%v\t%s\t%v", r.Method, r.URL.Path, requestId, res.Status(), http.StatusText(res.Status()), time.Since(start))
+}
+
+func newHttpServer() *negroni.Negroni {
+	return negroni.New(negroni.NewRecovery(), newLogger(), negroni.NewStatic(http.Dir("public")))
+}
 
 var monitors = presence.NewMonitorPool(map[string]time.Duration{
 	"heartbeat":     time.Second * 45,
@@ -28,7 +49,7 @@ func Start(bind, key string) {
 	mux.HandleFunc("/presence/", presenceEndpoint)
 	mux.HandleFunc("/", helloEndpoint)
 
-	n := negroni.Classic()
+	n := newHttpServer()
 	n.UseHandler(mux)
 
 	n.Use(negroni.NewRecovery())
